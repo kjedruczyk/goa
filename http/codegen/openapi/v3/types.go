@@ -166,7 +166,7 @@ func (sf *schemafier) schemafy(attr *expr.AttributeExpr, noref ...bool) *openapi
 		case expr.Float64Kind:
 			s.Type = openapi.Type("number")
 			s.Format = "double"
-		case expr.BytesKind, expr.AnyKind:
+		case expr.BytesKind:
 			if bases := attr.Bases; len(bases) > 0 {
 				for _, b := range bases {
 					// Union type
@@ -176,6 +176,14 @@ func (sf *schemafier) schemafy(attr *expr.AttributeExpr, noref ...bool) *openapi
 			} else {
 				s.Type = openapi.Type("string")
 				s.Format = "binary"
+			}
+		case expr.AnyKind:
+			if bases := attr.Bases; len(bases) > 0 {
+				for _, b := range bases {
+					// Union type
+					val := sf.schemafy(&expr.AttributeExpr{Type: b}, false)
+					s.AnyOf = append(s.AnyOf, val)
+				}
 			}
 		default:
 			s.Type = openapi.Type(t.Name())
